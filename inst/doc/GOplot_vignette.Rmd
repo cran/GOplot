@@ -1,5 +1,5 @@
 ---
-title: "GOplot 1.0"
+title: "GOplot_1.0"
 author: "Fatima Sanchez Cabo & Wencke Walter"
 date: "`r Sys.Date()`"
 output: 
@@ -176,7 +176,7 @@ GOChord(chord, space = 0.02, gene.order = 'logFC', gene.space = 0.25, gene.size 
 The *space* argument defines the space between the colored rectangles representing the logFC. Also the font size of the gene labels (*gene.size*) and the space (*gene.space*) between them was changed. The genes were ordered according to their logFC values setting *gene.order* to 'logFC'.
 
 ### Golden eye (GOCluster)
-The idea behind the *GOCluster* function is to visualize as much information as possible. Here is an example:
+So far, the last plotting function of the package is the *GOCluster* function. The idea behind this is to visualize as much information as possible. Here is an example:
 
 ```{r GOCluster, warning=FALSE, eval=FALSE, message=FALSE, fig.keep='none'}
 GOCluster(circ, EC$process, clust.by = 'logFC', term.width = 2)
