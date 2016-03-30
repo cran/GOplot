@@ -24,16 +24,26 @@ GOBar(subset(circ, category == 'BP'))
 #  GOBar(circ, display = 'multiple')
 
 ## ----GOBar3, eval = FALSE, warning = FALSE, message = FALSE--------------
-#  # Facet the barplot, add a title and change the color scale for the z-score
-#  GOBar(circ, display = 'multiple', title = 'Z-score colored barplot', zsc.col = c('yellow', 'black', 'cyan'))
+#  # Facet the barplot, add a title and change the colour scale for the z-score
+#  GOBar(circ, display = 'multiple', title = 'Z-score coloured barplot', zsc.col = c('yellow', 'black', 'cyan'))
 
 ## ----GOBubble1, warning = FALSE, message = FALSE, fig.keep = 'none'------
 # Generate the bubble plot with a label threshold of 3
 GOBubble(circ, labels = 3)
 
 ## ----GOBubble2, warning = FALSE, message = FALSE, fig.keep = 'none'------
-# Add a title, change the color of the circles, facet the plot according to the categories and change the label threshold
-GOBubble(circ, title = 'Bubble plot', color = c('deeppink', 'blue', 'chartreuse1'), display = 'multiple', labels = 3)
+# Add a title, change the colour of the circles, facet the plot according to the categories and change the label threshold
+GOBubble(circ, title = 'Bubble plot', colour = c('orange', 'darkred', 'gold'), display = 'multiple', labels = 3)
+
+## ----GOBubble3, warning = FALSE, message = FALSE, fig.keep = 'none'------
+# Colour the background according to the category
+GOBubble(circ, title = 'Bubble plot with background colour', display = 'multiple', bg.col = T, labels = 3)
+
+## ----GOBubble4, warning = FALSE, message = FALSE, fig.keep = 'none', eval = FALSE----
+#  # Reduce redundant terms with a gene overlap >= 0.75...
+#  reduced_circ <- reduce_overlap(circ, overlap = 0.75)
+#  # ...and plot it
+#  GOBubble(reduced_circ, labels = 2.8)
 
 ## ----GOCircle1, warning = FALSE, message = FALSE, fig.keep = 'none'------
 # Generate a circular visualization of the results of gene- annotation enrichment analysis
@@ -67,6 +77,18 @@ head(chord)
 ## ----GOChord3, warning = FALSE, message = FALSE, fig.keep = 'none'-------
 # Create the plot
 GOChord(chord, space = 0.02, gene.order = 'logFC', gene.space = 0.25, gene.size = 5)
+
+## ----GOChord4, warning = FALSE, message = FALSE, fig.keep = 'none'-------
+# Display only genes which are assigned to at least three processes
+GOChord(chord, limit = c(3, 0), gene.order = 'logFC')
+
+## ----GOHeat1, warning = FALSE, message = FALSE, fig.keep = 'none'--------
+# First, we use the chord object without logFC column to create the heatmap
+GOHeat(chord[,-8], nlfc = 0)
+
+## ----GOHeat2, warning = FALSE, message = FALSE, fig.keep = 'none'--------
+# First, we use the chord object without logFC column to create the heatmap
+GOHeat(chord, nlfc = 1, fill.col = c('red', 'yellow', 'green'))
 
 ## ----GOCluster, warning=FALSE, eval=FALSE, message=FALSE, fig.keep='none'----
 #  GOCluster(circ, EC$process, clust.by = 'logFC', term.width = 2)

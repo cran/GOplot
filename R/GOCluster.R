@@ -59,7 +59,7 @@ GOCluster<-function(data, process, metric, clust, clust.by, nlfc, lfc.col, lfc.m
   if (missing(metric)) metric<-'euclidean'
   if (missing(clust)) clust<-'average'
   if (missing(clust.by)) clust.by<-'term'
-  if (missing(nlfc)) nlfc<-F
+  if (missing(nlfc)) nlfc <- 0
   if (missing(lfc.col)) lfc.col<-c('firebrick1','white','dodgerblue')
   if (missing(lfc.min)) lfc.min <- -3
   if (missing(lfc.max)) lfc.max <- 3
@@ -69,12 +69,7 @@ GOCluster<-function(data, process, metric, clust, clust.by, nlfc, lfc.col, lfc.m
   if (missing(term.space)) term.space<- lfc.space+lfc.width else term.space<-term.space*(-1)+lfc.width
   if (missing(term.width)) term.width<- 2*lfc.width+term.space else term.width<-term.width*(-1)+term.space
   
-  if (nlfc){
-    colnames(data)[1:3] <- c('genes','term','logFC')
-    chord <- chord_dat(data[,1:3])
-  }else{
-    chord <- chord_dat(data = data, process = process)
-  }
+
   if (clust.by=='logFC') distance <- stats::dist(chord[,dim(chord)[2]], method=metric)
   if (clust.by=='term') distance <- stats::dist(chord, method=metric)
   cluster <- stats::hclust(distance, method=clust)
@@ -121,7 +116,7 @@ GOCluster<-function(data, process, metric, clust, clust.by, nlfc, lfc.col, lfc.m
   ggplot()+
     geom_segment(data=segment(dendr), aes(x=x, y=y, xend=xend, yend=yend))+
     geom_rect(data=lfc,aes(xmin=x-0.5,xmax=x+0.5,ymin=width,ymax=space,fill=logFC))+
-    scale_fill_gradient2('logFC',low=lfc.col[3],mid=lfc.col[2],high=lfc.col[1],guide=guide_colorbar(title.position='top',title.hjust=0.5),breaks=c(min(lfc$logFC),max(lfc$logFC)),labels=c(round(min(lfc$logFC)),round(max(lfc$logFC))))+
+    scale_fill_gradient2('logFC', space = 'Lab', low=lfc.col[3],mid=lfc.col[2],high=lfc.col[1],guide=guide_colorbar(title.position='top',title.hjust=0.5),breaks=c(min(lfc$logFC),max(lfc$logFC)),labels=c(round(min(lfc$logFC)),round(max(lfc$logFC))))+
     geom_rect(data=term_rect,aes(xmin=x-0.5,xmax=x+0.5,ymin=width,ymax=space),fill=term_rect$col)+
     geom_point(data=legend,aes(x=x,y=0.1,size=factor(label,levels=label),shape=NA))+
     guides(size=guide_legend("GO Terms",ncol=4,byrow=T,override.aes=list(shape=22,fill=term.col,size = 8)))+
@@ -158,36 +153,53 @@ GOCluster<-function(data, process, metric, clust, clust.by, nlfc, lfc.col, lfc.m
 #' @param ribbon.col The background color of the ribbons
 #' @param border.size Defines the size of the ribbon borders
 #' @param process.label The size of the legend entries
+#' @param limit A vector with two cutoff values (default= c(0,0)). The first 
+#' value defines the minimum number of terms a gene has to be assigned to. The 
+#' second the minimum number of genes assigned to a selected term.
 #' @details The \code{gene.order} argument has three possible options: "logFC", 
-#'   "alphabetical", "none". Actually, the options are quite self- explanatory.
+#'   "alphabetical", "none", which are quite self- explanatory.
 #'   
-#'   Another argument which needs a bit more explanation is \code{nlfc}. 
-#'   Differential expression analysis can be performed for multiple conditions 
-#'   and/or batches. Therefore, the data frame contains more than one logFC 
-#'   value per gene. To adjust to this situation the \code{nlfc} argument is 
-#'   used. It is a numeric value and it defines the number of logFC columns 
-#'   within the binary membership matrix. The default is "1" assuming that most 
-#'   of the time only one contrast is considered.
+#'   Maybe the most important argument of the function is \code{nlfc}.If your 
+#'   \code{data} does not contain a column of logFC values you have to set
+#'   \code{nlfc = 0}. Differential expression analysis can be performed for
+#'   multiple conditions and/or batches. Therefore, the data frame might contain
+#'   more than one logFC value per gene. To adjust to this situation the
+#'   \code{nlfc} argument is used as well. It is a numeric value and it defines
+#'   the number of logFC columns of your \code{data}. The default is "1"
+#'   assuming that most of the time only one contrast is considered.
+#'   
+#'   To represent the data more useful it might be necessary to reduce the 
+#'   dimension of \code{data}. This can be achieved with \code{limit}. The first
+#'   value of the vector defines the threshold for the minimum number of terms a
+#'   gene has to be assigned to in order to be represented in the plot. Most of
+#'   the time it is more meaningful to represent genes with various functions. A
+#'   value of 3 excludes all genes with less than three term assignments. 
+#'   Whereas the second value of the parameter restricts the number of terms 
+#'   according to the number of assigned genes. All terms with a count smaller 
+#'   or equal to the threshold are excluded.
 #' @seealso \code{\link{chord_dat}}
 #' @import ggplot2
 #' @import grDevices
 #' @examples
 #' \dontrun{
-#' #Load the included dataset
+#' # Load the included dataset
 #' data(EC)
 #' 
-#' #Generating the binary matrix
+#' # Generating the binary matrix
 #' chord<-chord_dat(circ,EC$genes,EC$process)
 #' 
-#' #Creating the chord plot
+#' # Creating the chord plot
 #' GOChord(chord)
 #' 
-#' #Creating the chord plot genes ordered by logFC and a different logFC color scale
+#' # Excluding process with less than 5 assigned genes
+#' GOChord(chord, limit = c(0,5))
+#' 
+#' # Creating the chord plot genes ordered by logFC and a different logFC color scale
 #' GOChord(chord,space=0.02,gene.order='logFC',lfc.col=c('red','black','cyan'))
 #' }
 #' @export
 
-GOChord <- function(data, title, space, gene.order, gene.size, gene.space, nlfc = 1, lfc.col, lfc.min, lfc.max, ribbon.col, border.size, process.label){
+GOChord <- function(data, title, space, gene.order, gene.size, gene.space, nlfc = 1, lfc.col, lfc.min, lfc.max, ribbon.col, border.size, process.label, limit){
   y <- id <- xpro <- ypro <- xgen <- ygen <- lx <- ly <- ID <- logFC <- NULL
   Ncol <- dim(data)[2]
   
@@ -199,24 +211,25 @@ GOChord <- function(data, title, space, gene.order, gene.size, gene.space, nlfc 
   if (missing(lfc.col)) lfc.col <- c('brown1', 'azure', 'cornflowerblue')
   if (missing(lfc.min)) lfc.min <- -3
   if (missing(lfc.max)) lfc.max <- 3
-  if (missing(ribbon.col)) colRib <- grDevices::rainbow(Ncol - nlfc) else colRib <- ribbon.col
   if (missing(border.size)) border.size <- 0.5
   if (missing (process.label)) process.label <- 11
+  if (missing(limit)) limit <- c(0, 0)
   
   if (gene.order == 'logFC') data <- data[order(data[, Ncol], decreasing = T), ]
   if (gene.order == 'alphabetical') data <- data[order(rownames(data)), ]
   if (sum(!is.na(match(colnames(data), 'logFC'))) > 0){
     if (nlfc == 1){
-      cdata <- data[, 1:(Ncol - 1)]
-      lfc <-data[, Ncol]
+      cdata <- check_chord(data[, 1:(Ncol - 1)], limit)
+      lfc <- sapply(rownames(cdata), function(x) data[match(x,rownames(data)), Ncol])
     }else{
-      cdata <- data[, 1:(Ncol - nlfc)]
-      lfc <- data[, (Ncol - nlfc + 1)]
+      cdata <- check_chord(data[, 1:(Ncol - nlfc)], limit)
+      lfc <- sapply(rownames(cdata), function(x) data[, (Ncol - nlfc + 1)])
     }
   }else{
-    cdata <- data
+    cdata <- check_chord(data, limit)
     lfc <- 0
   }
+  if (missing(ribbon.col)) colRib <- grDevices::rainbow(dim(cdata)[2]) else colRib <- ribbon.col
   nrib <- colSums(cdata)
   ngen <- rowSums(cdata)
   Ncol <- dim(cdata)[2]
@@ -309,7 +322,7 @@ GOChord <- function(data, title, space, gene.order, gene.size, gene.space, nlfc 
   
   if (nlfc >= 1){
     g + geom_polygon(data = df_genes, aes(x, y, group = id, fill = logFC), inherit.aes = F, color = 'black') +
-      scale_fill_gradient2('logFC', low = lfc.col[3], mid = lfc.col[2], high = lfc.col[1], guide = guide_colorbar(title.position = "top", title.hjust = 0.5), 
+      scale_fill_gradient2('logFC', space = 'Lab', low = lfc.col[3], mid = lfc.col[2], high = lfc.col[1], guide = guide_colorbar(title.position = "top", title.hjust = 0.5), 
                            breaks = c(min(df_genes$logFC), max(df_genes$logFC)), labels = c(round(min(df_genes$logFC)), round(max(df_genes$logFC)))) +
       theme(legend.position = 'bottom', legend.background = element_rect(fill = 'transparent'), legend.box = 'horizontal', legend.direction = 'horizontal')
   }else{
